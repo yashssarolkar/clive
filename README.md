@@ -478,8 +478,8 @@ tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
 def tokenize(batch):
     return tokenizer(batch['text'], padding=True, truncation=True)
-dataset = dataset.map(tokenize, batched=True)
 
+dataset = dataset.map(tokenize, batched=True)
 dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"])
 
 model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2)
@@ -493,27 +493,21 @@ def compute_metrics(eval_pred):
 
 training_args = TrainingArguments(
     output_dir="./results",
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
     per_device_train_batch_size=16,
     per_device_eval_batch_size=16,
     num_train_epochs=2,
-    weight_decay=0.01,
-    logging_dir="./logs",
-    logging_steps=10,
-    load_best_model_at_end=True
+    logging_dir="./logs"
 )
 
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=dataset["train"].shuffle(seed=42).select(range(10000)),  # Reduce for quick training
+    train_dataset=dataset["train"].shuffle(seed=42).select(range(10000)),
     eval_dataset=dataset["test"].select(range(2000)),
     compute_metrics=compute_metrics
 )
 
 trainer.train()
-
 results = trainer.evaluate()
 print("\n📊 Evaluation Results:")
 for k, v in results.items():
