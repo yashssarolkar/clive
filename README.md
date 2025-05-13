@@ -402,6 +402,85 @@ print("Definition:", synset.definition() if synset else "No definition found.")
 
 8. Not here for now
 
+pip install pandas nltk gensim tqdm
+# ------------- Step 1: Import Required Libraries -------------
+import pandas as pd
+import nltk
+import re
+from nltk.corpus import stopwords
+from gensim.models import FastText
+from gensim.utils import simple_preprocess
+from tqdm import tqdm
+import numpy as np
+import os
+
+nltk.download('stopwords')
+
+# ------------- Step 2: Load COVID-19 Dataset -------------
+# Use your file path here
+df = pd.read_csv("covid.csv")
+df = df.dropna(subset=["text"])
+texts = df["text"].tolist()
+
+# ------------- Step 3: Text Preprocessing Function -------------
+stop_words = set(stopwords.words("english"))
+
+def clean_text(text):
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text)  # Remove URLs
+    text = re.sub(r"[^a-zA-Z]", " ", text)               # Remove punctuation/numbers
+    text = text.lower()
+    tokens = simple_preprocess(text)
+    return [word for word in tokens if word not in stop_words]
+
+# Apply cleaning
+cleaned_corpus = [clean_text(doc) for doc in tqdm(texts)]
+
+# -------------------- PART A: FASTTEXT --------------------
+print("Training FastText embeddings...")
+
+fasttext_model = FastText(sentences=cleaned_corpus, vector_size=100, window=5, min_count=2, epochs=10)
+
+# Save model
+fasttext_model.save("fasttext_covid.model")
+
+# Example: Get vector for word 'virus'
+print("FastText vector for 'virus':\n", fasttext_model.wv['virus'])
+
+# Save word vectors
+with open("fasttext_vectors.txt", "w") as f:
+    for word in fasttext_model.wv.index_to_key:
+        vec = fasttext_model.wv[word]
+        vec_str = ' '.join(map(str, vec))
+        f.write(f"{word} {vec_str}\n")
+
+# -------------------- PART B: GloVe --------------------
+# You need to download GloVe embeddings from https://nlp.stanford.edu/projects/glove/
+# Use `glove.6B.100d.txt` (100-dim vectors trained on 6B tokens)
+
+print("Loading GloVe vectors...")
+glove_path = "glove.6B.100d.txt"
+glove_vectors = {}
+with open(glove_path, "r", encoding="utf8") as f:
+    for line in f:
+        values = line.split()
+        word = values[0]
+        vec = np.array(values[1:], dtype='float32')
+        glove_vectors[word] = vec
+
+# Example: Get vector for 'covid'
+print("GloVe vector for 'covid':\n", glove_vectors.get("covid", "Not found"))
+
+# Save glove subset from our corpus
+print("Saving GloVe vectors for words in COVID dataset...")
+with open("glove_covid_vectors.txt", "w") as f:
+    for tokens in cleaned_corpus:
+        for word in tokens:
+            if word in glove_vectors:
+                vec = glove_vectors[word]
+                vec_str = " ".join(map(str, vec))
+                f.write(f"{word} {vec_str}\n")
+
+
 9. A) Implement n-gram model.
 
 import nltk
