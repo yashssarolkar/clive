@@ -236,7 +236,6 @@ class TransformerEncoder(nn.Module):
             x = layer(x, mask)
         return self.norm(x)
 
-# Sample input: batch of 2 sentences, each with 6 tokens
 src = torch.randint(0, 1000, (2, 6))  # batch_size x seq_len
 
 model = TransformerEncoder(
@@ -296,11 +295,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-# Download required NLTK resources
 nltk.download('movie_reviews')
 nltk.download('punkt')
 
-# Load movie review texts and corresponding labels
 docs = []
 labels = []
 
@@ -309,24 +306,19 @@ for category in movie_reviews.categories():
         docs.append(movie_reviews.raw(fid))
         labels.append(category)
 
-# Split data into training and test sets
 docs_train, docs_test, y_train, y_test = train_test_split(
     docs, labels, test_size=0.2, random_state=42, stratify=labels
 )
 
-# Create pipeline: TF-IDF vectorizer followed by Logistic Regression
 pipe = Pipeline([
     ('tfidf', TfidfVectorizer(ngram_range=(1, 2), stop_words='english')),
     ('clf', LogisticRegression(solver='lbfgs', max_iter=1000)),
 ])
 
-# Train the model
 pipe.fit(docs_train, y_train)
 
-# Predict on the test data
 y_pred = pipe.predict(docs_test)
 
-# Print results
 print("\n=== Sentiment Analysis Results ===")
 print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
 print(metrics.classification_report(y_test, y_pred, digits=4))
@@ -417,7 +409,6 @@ from nltk import ngrams
 from nltk.tokenize import word_tokenize
 nltk.download('punkt')
 
-# Sample input text
 text = [
     'the quick brown fox',
     'the slow brown dog',
@@ -425,7 +416,6 @@ text = [
     'the lazy yellow fox'
 ]
 
-# Tokenize and generate n-grams
 def generate_ngrams(texts, n):
     for sentence in texts:
         tokens = word_tokenize(sentence.lower())
@@ -434,7 +424,6 @@ def generate_ngrams(texts, n):
         for gram in n_grams:
             print(gram)
 
-# Display unigrams, bigrams, and trigrams
 generate_ngrams(text, 1)  # Unigrams
 generate_ngrams(text, 2)  # Bigrams
 generate_ngrams(text, 3)  # Trigrams
@@ -448,7 +437,6 @@ topic modelling using text: &#39;the quick brown fox&#39;,
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
-# Sample documents
 documents = [
     "The cat sat on the mat.",
     "Dogs are great pets.",
@@ -462,15 +450,12 @@ documents = [
     "I enjoy hiking and outdoor activities."
 ]
 
-# Step 1: Vectorize text (Bag-of-Words)
 vectorizer = CountVectorizer(stop_words='english')
 X = vectorizer.fit_transform(documents)
 
-# Step 2: Apply LDA
 lda_model = LatentDirichletAllocation(n_components=3, random_state=42)
 lda_model.fit(X)
 
-# Step 3: Display topics
 terms = vectorizer.get_feature_names_out()
 
 print("\n🔹 LDA Topics Discovered:")
@@ -486,26 +471,19 @@ from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassific
 import torch
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-# Step 1: Load IMDB dataset
 dataset = load_dataset("imdb")
 dataset = dataset.shuffle(seed=42)
 
-# Step 2: Load tokenizer
 tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
-# Step 3: Tokenize the data
 def tokenize(batch):
     return tokenizer(batch['text'], padding=True, truncation=True)
-
 dataset = dataset.map(tokenize, batched=True)
 
-# Step 4: Set input/output columns
 dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"])
 
-# Step 5: Load model
 model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2)
 
-# Step 6: Define metrics
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     predictions = torch.argmax(torch.tensor(logits), dim=-1)
@@ -513,7 +491,6 @@ def compute_metrics(eval_pred):
     acc = accuracy_score(labels, predictions)
     return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
 
-# Step 7: Define training args
 training_args = TrainingArguments(
     output_dir="./results",
     evaluation_strategy="epoch",
@@ -527,7 +504,6 @@ training_args = TrainingArguments(
     load_best_model_at_end=True
 )
 
-# Step 8: Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
@@ -536,10 +512,8 @@ trainer = Trainer(
     compute_metrics=compute_metrics
 )
 
-# Step 9: Train the model
 trainer.train()
 
-# Step 10: Evaluate
 results = trainer.evaluate()
 print("\n📊 Evaluation Results:")
 for k, v in results.items():
